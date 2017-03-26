@@ -24,7 +24,19 @@ df['time'] = df['time'].astype(np.datetime64)
 for x in  df['time'] :
     print x.year
 '''
-
+def __convert2one_hot(type):
+    """
+    todo: has problem when type is 0
+    :param type:
+    :return: list of 0,1
+    """
+    l = []
+    for x in range(1,type):
+        l.append(0)
+    l.append(1)
+    for x in range(type,6):
+        l.append(0)
+    return l
 #pd.to_datetime(df)
 def fetch_user_actions(user_id, start_time, end_time ):
     """Fetches rows from action log.
@@ -79,25 +91,32 @@ def fetch_user_actions(user_id, start_time, end_time ):
         df = pd.read_csv(config_util.get(section='Path',key='Action04'))
 
     df['time'] = df['time'].astype(np.datetime64)
-    print df.describe
+    #print df.describe
     #df = df.sort(['time'], ascending=1)
     #if has multi condition, then the () is needed.
     df = df[(df['time'] > start_time) & (df['time'] < end_time)]
-    print df.describe
+    #print df.describe
 
-    grouped = df.groupby(['user_id', 'sku_id'])
+    #star the 'type' column to multi columns
+    type_star = df.type.apply(lambda type: pd.Series(__convert2one_hot(type)))
+    type_star.columns = ['skim','add_cart','rm_cart','order','favor','click']
+    df.join(type_star)
+
+    grouped = df.groupby(['user_id', 'sku_id']).count()
     #can't use user_id directly again after group by
-
+    print type(grouped)
+    print grouped
+    '''
     for (key1,key2),group in grouped:
         print key1
         print key2
         for element in group[group['user_id'] == user_id]:
             print element
+    '''
 
 
 
-
-fetch_user_actions(27630, '2016-02-01', '2016-02-25' )
+fetch_user_actions(27630, '2016-02-01', '2016-02-15' )
 
 
 
